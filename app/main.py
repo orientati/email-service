@@ -54,9 +54,9 @@ async def lifespan(app: FastAPI):
     broker_instance = broker.AsyncBrokerSingleton()
     connected = await broker_instance.connect()
     if (not connected):
-        logger.error("Could not connect to RabbitMQ. Exiting...")
-        sys.exit(1)
-        return
+        logger.error("Could not connect to RabbitMQ. Continuing without broker...")
+        # sys.exit(1)
+        # return
 
     else:
         logger.info("Connected to RabbitMQ.")
@@ -86,8 +86,8 @@ app = FastAPI(
 current_router = APIRouter()
 
 current_router.include_router(
-    prefix="/template",
-    tags=[settings.SERVICE_NAME, "template"],
+    prefix="/email",
+    tags=[settings.SERVICE_NAME, "email"],
     router=email.router,
 )
 

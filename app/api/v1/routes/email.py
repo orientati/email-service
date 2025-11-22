@@ -7,6 +7,8 @@ from app.schemas.email import SendEmail, SendEmailResponseStatus
 router = APIRouter()
 
 
+from app.services.email import send_email
+
 @router.post("/", response_model=SendEmailResponseStatus)
-def template(request: SendEmail):
-    pass
+async def template(request: SendEmail):
+    return await send_email(request)
