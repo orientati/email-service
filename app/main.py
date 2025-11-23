@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import json
 from contextlib import asynccontextmanager
 
 import sentry_sdk
@@ -33,11 +34,34 @@ logger = None
 # RabbitMQ Broker
 async def callback(message):
     async with message.process():
-        print(
-            f"Received message from exchange '{message.exchange}' with routing key '{message.routing_key}': {message.body.decode()}")
+        try:
+            body = message.body.decode()
+            data = json.loads(body)
+            if logger:
+                logger.info(f"Received email task: {data}")
+            
+            # Si presume che il corpo del messaggio sia un JSON che corrisponde allo schema SendEmail o abbia un campo 'data'
+            
+            email_data = data.get("data", data)
+            
+            # Validazione tramite schema
+            from app.schemas.email import SendEmail
+            from app.services.email import send_email
+            
+            email_request = SendEmail(**email_data)
+            result = await send_email(email_request)
+            
+            if result.code != 200:
+                if logger:
+                    logger.error(f"Failed to send email via RabbitMQ: {result.message} - {result.detail}")
+            else:
+                if logger:
+                    logger.info(f"Email sent via RabbitMQ: {result.detail}")
+                
+        except Exception as e:
+            if logger:
+                logger.error(f"Error processing RabbitMQ message: {e}")
 
-
-# TODO: gestire logica invio email tramite rabbitMQ
 
 exchanges = {
     "email": callback,
