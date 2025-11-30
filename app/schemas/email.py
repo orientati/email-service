@@ -5,8 +5,8 @@ from pydantic import BaseModel, EmailStr
 
 class SendEmail(BaseModel):
     to: EmailStr
-    subject: str
-    body: str
+    template_alias: str
+    data: dict
 
 
 class SendEmailResponseStatus(BaseModel):

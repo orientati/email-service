@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     RABBITMQ_PORT: int = 5672
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASS: str = "guest"
+    RABBITMQ_SEND_EMAIL_ROUTING_KEY: str = "email_queue"
     SERVICE_PORT: int = 8000
     ENVIRONMENT: str = "development"
     SENTRY_DSN: str = ""
@@ -25,10 +26,10 @@ class Settings(BaseSettings):
     USE_CREDENTIALS: bool = True
     VALIDATE_CERTS: bool = True
 
-
     model_config = SettingsConfigDict(
         env_file=".env",
         env_prefix="EMAIL_"  # Prefisso di tutte le variabili (es. EMAIL_DATABASE_URL)
     )
+
 
 settings = Settings()

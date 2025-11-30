@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from app.schemas.email import SendEmail, SendEmailResponseStatus
-from app.core.config import settings
 import logging
+
+from fastapi_mail import ConnectionConfig, FastMail
+
+from app.core.config import settings
+from app.schemas.email import SendEmail, SendEmailResponseStatus
 
 logger = logging.getLogger(__name__)
 
@@ -22,25 +24,36 @@ conf = ConnectionConfig(
 
 fast_mail = FastMail(conf)
 
-async def send_email(request: SendEmail) -> SendEmailResponseStatus:
-    message = MessageSchema(
-        subject=request.subject,
-        recipients=[request.to],
-        body=request.body,
-        subtype=MessageType.html
-    )
 
-    try:
-        await fast_mail.send_message(message)
-        return SendEmailResponseStatus(
-            code=200,
-            message="Email sent successfully",
-            detail="Email sent to " + request.to
-        )
-    except Exception as e:
-        logger.error(f"Failed to send email: {e}")
-        return SendEmailResponseStatus(
-            code=500,
-            message="Failed to send email",
-            detail=str(e)
-        )
+async def rabbitmq_callback(message):
+    async with message.process():
+        logger.info(f"RabbitMQ message: {message}")
+        await send_email(message)
+
+
+async def send_email(request: SendEmail) -> SendEmailResponseStatus:
+    # message = MessageSchema(
+    #     subject=request.subject,
+    #     recipients=[request.to],
+    #     body=request.body,
+    #     subtype=MessageType.html
+    # )
+    #
+    # try:
+    #     await fast_mail.send_message(message)
+    #     return SendEmailResponseStatus(
+    #         code=200,
+    #         message="Email sent successfully",
+    #         detail="Email sent to " + request.to
+    #     )
+    # except Exception as e:
+    #     logger.error(f"Failed to send email: {e}")
+    #     return SendEmailResponseStatus(
+    #         code=500,
+    #         message="Failed to send email",
+    #         detail=str(e)
+    #     )
+
+    # TODO: gestire template
+    print("GAGA")
+    pass
