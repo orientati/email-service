@@ -8,10 +8,10 @@ from fastapi.responses import ORJSONResponse
 from sentry_sdk.integrations.httpx import HttpxIntegration
 
 from app.api.v1.routes import email
+from app.consumers import email as email_consumer
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.services import broker
-from app.services import email as email_service
 
 sentry_sdk.init(
     dsn=settings.SENTRY_DSN,
@@ -62,7 +62,7 @@ logger = None
 #
 
 exchanges = {
-    "email": email_service.rabbitmq_callback,
+    "email": email_consumer.on_email_message,
 }
 
 

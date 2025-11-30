@@ -1,0 +1,6 @@
+<mj-section padding-bottom="20px">
+  <mj-column>
+    <mj-image width="150px" src="https://avatars.githubusercontent.com/u/220979696?s=200&v=4" alt="Orientati Logo" /> <!-- TODO: LOGO TEMPORANEO -->
+    <mj-divider border-color="#3498db" border-width="1px" />
+  </mj-column>
+</mj-section>

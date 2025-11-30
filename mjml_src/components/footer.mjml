@@ -1,0 +1,8 @@
+<mj-section>
+  <mj-column>
+    <mj-text align="center" color="#999999" font-size="12px">
+      <p>Email inviata automaticamente da Orientati Service.</p>
+      <p>&copy; 2025 Orientati. Tutti i diritti riservati.</p>
+    </mj-text>
+  </mj-column>
+</mj-section>

@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
-from fastapi_mail import ConnectionConfig, FastMail
+from fastapi.templating import Jinja2Templates
+from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 
 from app.core.config import settings
-from app.schemas.email import SendEmail, SendEmailResponseStatus
+from app.schemas.email import EmailRequest, SendEmailResponseStatus
 
 logger = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).resolve().parents[1]  # recupera la directory principale dell'applicazione
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))  # Imposta la directory dei template
 
 conf = ConnectionConfig(
     MAIL_USERNAME=settings.MAIL_USERNAME,
@@ -25,35 +30,35 @@ conf = ConnectionConfig(
 fast_mail = FastMail(conf)
 
 
-async def rabbitmq_callback(message):
-    async with message.process():
-        logger.info(f"RabbitMQ message: {message}")
-        await send_email(message)
+async def send_email(request: EmailRequest) -> SendEmailResponseStatus:
+    try:
+        template = templates.get_template(
+            f"{request.template_name}.html")  # Carica il template Jinja2 specificato dalla richiesta
 
+        if not template:
+            raise ValueError(f"Template {request.template_name} not found")
 
-async def send_email(request: SendEmail) -> SendEmailResponseStatus:
-    # message = MessageSchema(
-    #     subject=request.subject,
-    #     recipients=[request.to],
-    #     body=request.body,
-    #     subtype=MessageType.html
-    # )
-    #
-    # try:
-    #     await fast_mail.send_message(message)
-    #     return SendEmailResponseStatus(
-    #         code=200,
-    #         message="Email sent successfully",
-    #         detail="Email sent to " + request.to
-    #     )
-    # except Exception as e:
-    #     logger.error(f"Failed to send email: {e}")
-    #     return SendEmailResponseStatus(
-    #         code=500,
-    #         message="Failed to send email",
-    #         detail=str(e)
-    #     )
+        html_content = template.render(**request.context)  # Rederizza il template con il contesto fornito
 
-    # TODO: gestire template
-    print("GAGA")
-    pass
+        message = MessageSchema(
+            subject=request.subject,
+            recipients=[request.to],
+            body=html_content,
+            subtype=MessageType.html
+        )
+
+        # Invia l'email in modo asincrono
+        await fast_mail.send_message(message)
+
+        return SendEmailResponseStatus(
+            code=200,
+            message="Email sent successfully",
+            detail=f"Email sent to {request.to} using template {request.template_name}"
+        )
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
+        return SendEmailResponseStatus(
+            code=500,
+            message="Failed to send email",
+            detail=str(e)
+        )

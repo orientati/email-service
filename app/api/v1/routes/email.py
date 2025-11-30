@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.schemas.email import SendEmail, SendEmailResponseStatus
+from app.schemas.email import EmailRequest, SendEmailResponseStatus
+from app.services.email import send_email
 
 router = APIRouter()
 
 
-from app.services.email import send_email
-
 @router.post("/", response_model=SendEmailResponseStatus)
-async def template(request: SendEmail):
+async def send_email_endpoint(request: EmailRequest):
     return await send_email(request)

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr
+from typing import Dict, Any
+
+from pydantic import BaseModel, NameEmail
 
 
-class SendEmail(BaseModel):
-    to: EmailStr
-    template_alias: str
-    data: dict
+class EmailRequest(BaseModel):
+    to: NameEmail
+    subject: str
+    template_name: str
+    context: Dict[str, Any]
 
 
 class SendEmailResponseStatus(BaseModel):
