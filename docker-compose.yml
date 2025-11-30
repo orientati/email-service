@@ -10,11 +10,8 @@ services:
 
   email-service:
     build: .
-    env_file:
-      - .env
+
     command: gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000 --workers 1
-    ports:
-      - "8000:8000"
     networks:
       - rabbit_net
     restart: unless-stopped
