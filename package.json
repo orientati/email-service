@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "build:emails": "mjml mjml_src/auth/*.mjml -o app/templates/"
+  },
+  "dependencies": {
+    "mjml": "^4.14.1"
+  }
+}

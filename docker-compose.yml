@@ -1,0 +1,21 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: pass
+    networks:
+      - rabbit_net
+
+  email-service:
+    build: .
+
+    command: gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000 --workers 1
+    networks:
+      - rabbit_net
+    restart: unless-stopped
+
+networks:
+  rabbit_net:
+    driver: bridge
