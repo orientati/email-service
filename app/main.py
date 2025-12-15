@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
-
+import asyncio
 import sentry_sdk
+import sys
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, APIRouter
 from fastapi.responses import ORJSONResponse
 from sentry_sdk.integrations.httpx import HttpxIntegration
@@ -12,7 +13,6 @@ from app.consumers import email as email_consumer
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.services import broker
-import asyncio
 
 sentry_sdk.init(
     dsn=settings.SENTRY_DSN,
