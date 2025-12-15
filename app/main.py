@@ -12,6 +12,7 @@ from app.consumers import email as email_consumer
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.services import broker
+import asyncio
 
 sentry_sdk.init(
     dsn=settings.SENTRY_DSN,
