@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASS: str = "guest"
     RABBITMQ_SEND_EMAIL_ROUTING_KEY: str = "email_queue"
+    RABBITMQ_CONNECTION_RETRIES: int = 5
+    RABBITMQ_CONNECTION_RETRY_DELAY: int = 5
     SERVICE_PORT: int = 8000
     ENVIRONMENT: str = "development"
     SENTRY_DSN: str = ""
