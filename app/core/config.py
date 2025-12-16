@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     RABBITMQ_CONNECTION_RETRY_DELAY: int = 5
     SERVICE_PORT: int = 8000
     ENVIRONMENT: str = "development"
-    SENTRY_DSN: str = ""
+    SENTRY_DSN: str | None = None
+    SENTRY_ENVIRONMENT: str = "local"
+    SENTRY_DEBUG: bool = False
     SENTRY_RELEASE: str = "0.1.0"
     API_PREFIX: str = "/api/v1"
     MAIL_USERNAME: str = ""
