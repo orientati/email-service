@@ -31,34 +31,26 @@ fast_mail = FastMail(conf)
 
 
 async def send_email(request: EmailRequest) -> SendEmailResponseStatus:
-    try:
-        template = templates.get_template(
-            f"{request.template_name}.html")  # Carica il template Jinja2 specificato dalla richiesta
+    template = templates.get_template(
+        f"{request.template_name}.html")  # Carica il template Jinja2 specificato dalla richiesta
 
-        if not template:
-            raise ValueError(f"Template {request.template_name} not found")
+    if not template:
+        raise ValueError(f"Template {request.template_name} not found")
 
-        html_content = template.render(**request.context)  # Rederizza il template con il contesto fornito
+    html_content = template.render(**request.context)  # Rederizza il template con il contesto fornito
 
-        message = MessageSchema(
-            subject=request.subject,
-            recipients=[request.to],
-            body=html_content,
-            subtype=MessageType.html
-        )
+    message = MessageSchema(
+        subject=request.subject,
+        recipients=[request.to],
+        body=html_content,
+        subtype=MessageType.html
+    )
 
-        # Invia l'email in modo asincrono
-        await fast_mail.send_message(message)
+    # Invia l'email in modo asincrono
+    await fast_mail.send_message(message)
 
-        return SendEmailResponseStatus(
-            code=200,
-            message="Email sent successfully",
-            detail=f"Email sent to {request.to} using template {request.template_name}"
-        )
-    except Exception as e:
-        logger.error(f"Failed to send email: {e}")
-        return SendEmailResponseStatus(
-            code=500,
-            message="Failed to send email",
-            detail=str(e)
-        )
+    return SendEmailResponseStatus(
+        code=200,
+        message="Email sent successfully",
+        detail=f"Email sent to {request.to} using template {request.template_name}"
+    )
