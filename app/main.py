@@ -16,15 +16,12 @@ from app.services import broker
 
 sentry_sdk.init(
     dsn=settings.SENTRY_DSN,
-    environment=settings.ENVIRONMENT,
-    send_default_pii=True,
-    enable_tracing=True,
-    profile_session_sample_rate=1.0,
-    profile_lifecycle="trace",
-    profiles_sample_rate=1.0,
-    enable_logs=True,
+    traces_sample_rate=1.0,  # TODO Adjust this in production
+    profiles_sample_rate=1.0,  # TODO Adjust this in production
     integrations=[HttpxIntegration()],
-    release=settings.SENTRY_RELEASE
+    environment=settings.SENTRY_ENVIRONMENT,
+    debug=settings.SENTRY_DEBUG,
+    release=settings.SENTRY_RELEASE,
 )
 
 sentry_sdk.set_tag("service.name", settings.SERVICE_NAME)
