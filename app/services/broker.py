@@ -87,11 +87,12 @@ class AsyncBrokerSingleton:
         logger.info(
             f"Subscribed to exchange {exchange_name} with queue '{queue_name}' and routing key '{routing_key}' (aio-pika)")
 
-    async def unsubscribe(self, queue_name):
+    async def unsubscribe(self, queue_name, unbind=True):
         """Annulla la sottoscrizione a una coda RabbitMQ (asincrono).
 
         Args:
             queue_name (str): Nome della coda da cui annullare la sottoscrizione.
+            unbind (bool): Se True, esegue l'unbind della coda dall'exchange. Default: True.
         """
         if queue_name in self.consumer_tags:
             consumer_tag = self.consumer_tags[queue_name]
@@ -100,10 +101,11 @@ class AsyncBrokerSingleton:
             del self.consumer_tags[queue_name]
 
         if queue_name in self.queues:
-            await self.queues[queue_name].unbind()
+            if unbind:
+                await self.queues[queue_name].unbind()
             # await self.queues[queue_name].delete() # Optional: decide if we want to delete the queue
             del self.queues[queue_name]
-        logger.info(f"Unsubscribed from queue '{queue_name}' (aio-pika)")
+        logger.info(f"Unsubscribed from queue '{queue_name}' (unbind={unbind}) (aio-pika)")
 
     async def publish_message(self, exchange_name, msg_type, data, routing_key=""):
         """Pubblica un messaggio su un exchange RabbitMQ (asincrono).
@@ -130,7 +132,7 @@ class AsyncBrokerSingleton:
     async def close(self):
         """Chiude la connessione a RabbitMQ e annulla tutte le sottoscrizioni (asincrono)."""
         for queue_name in list(self.consumer_tags.keys()):
-            await self.unsubscribe(queue_name)
+            await self.unsubscribe(queue_name, unbind=False)
         if self.channel:
             await self.channel.close()
         if self.connection:
