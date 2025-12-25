@@ -24,16 +24,19 @@ async def on_email_message(message: IncomingMessage):
             logger.info(f"Ricevuto task email per: {payload.get('to', 'unknown')}")
 
             # Validazione (Pydantic)
-            # Se il JSON è malformato, Pydantic solleva eccezione e il messaggio va in Dead Letter (o scartato)
             email_request = EmailRequest(**payload)
 
             # Chiamata al Service
+            # Se send_email fallisce, solleva eccezione e message.process() farà il nack (requeue)
             result = await send_email(email_request)
+            
+            logger.info(f"Email inviata con successo via RabbitMQ: {result.detail}")
 
-            if result.code != 200:
-                logger.error(f"Errore invio service: {result.detail}")
-            else:
-                logger.info(f"Email inviata con successo via RabbitMQ")
-
+        except (ValueError, TypeError, json.JSONDecodeError) as e:
+            # Errori di validazione o input malformato: NON riprovare.
+            # Uscendo dal blocco try senza sollevare eccezione, il context manager farà ack.
+            logger.error(f"Errore validazione/input task email: {e}. Messaggio scartato.")
         except Exception as e:
-            logger.error(f"Errore critico consumatore email: {e}", exc_info=True)
+            # Errori transitori (es. connessione SMTP): Riprova (Nack + Requeue)
+            logger.error(f"Errore critico invio email: {e}. Il messaggio verrà riaccodato.", exc_info=True)
+            raise e

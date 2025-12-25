@@ -10,4 +10,11 @@ router = APIRouter()
 
 @router.post("/", response_model=SendEmailResponseStatus)
 async def send_email_endpoint(request: EmailRequest):
-    return await send_email(request)
+    try:
+        return await send_email(request)
+    except Exception as e:
+        return SendEmailResponseStatus(
+            code=500,
+            message="Failed to send email",
+            detail=str(e)
+        )
