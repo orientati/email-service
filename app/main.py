@@ -16,8 +16,8 @@ from app.services import broker
 
 sentry_sdk.init(
     dsn=settings.SENTRY_DSN,
-    traces_sample_rate=1.0,  # TODO Adjust this in production
-    profiles_sample_rate=1.0,  # TODO Adjust this in production
+    traces_sample_rate=1.0,  # TODO Modificare in produzione
+    profiles_sample_rate=1.0,  # TODO Modificare in produzione
     integrations=[HttpxIntegration()],
     environment=settings.SENTRY_ENVIRONMENT,
     debug=settings.SENTRY_DEBUG,
