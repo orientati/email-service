@@ -1,35 +1,60 @@
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from app.api.deps import get_db
-from app.db.base import Base
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
+from unittest.mock import AsyncMock, MagicMock
 from app.main import app
+from app.services import broker
+from app.services.email import fast_mail
 
-# DB in memoria per i test
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+@pytest_asyncio.fixture
+async def client():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+@pytest.fixture(autouse=True)
+def mock_broker(monkeypatch):
+    """
+    Simula AsyncBrokerSingleton per evitare la connessione a RabbitMQ durante i test.
+    """
+    mock_instance = MagicMock()
+    mock_instance.connect = AsyncMock(return_value=True)
+    mock_instance.subscribe = AsyncMock()
+    mock_instance.close = AsyncMock()
+    
+    # Simula il comportamento del singleton: quando viene chiamato AsyncBrokerSingleton(), restituisce mock_instance
+    # Poiché AsyncBrokerSingleton è una classe, dobbiamo simulare __new__ o la classe stessa.
+    # Un modo più semplice se viene utilizzato come singleton è applicare la patch alla classe nel modulo in cui viene utilizzata,
+    # o meglio, applicare la patch alla classe stessa.
+    
+    def mock_constructor(*args, **kwargs):
+        return mock_instance
 
+    # Applichiamo la patch alla classe stessa per restituire la nostra istanza simulata
+    monkeypatch.setattr(broker, "AsyncBrokerSingleton", mock_constructor)
+    
+    return mock_instance
 
-# Override della dipendenza get_db per i test
-def override_get_db():
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@pytest.fixture(autouse=True)
+def mock_templates(monkeypatch):
+    """
+    Simula app.services.email.templates per evitare di aver bisogno dei file template effettivi.
+    """
+    mock_tmpl = MagicMock()
+    # Simula get_template per restituire un oggetto template simulato con un metodo render
+    mock_template = MagicMock()
+    mock_template.render.return_value = "<html><body>Mocked Email Content</body></html>"
+    mock_tmpl.get_template.return_value = mock_template
+    
+    from app.services import email
+    monkeypatch.setattr(email, "templates", mock_tmpl)
+    return mock_tmpl
 
-
-app.dependency_overrides[get_db] = override_get_db
-
-
-@pytest.fixture(scope="function")
-def client():
-    # Ricrea le tabelle per ogni test
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-    with TestClient(app) as c:
-        yield c
+@pytest.fixture(autouse=True)
+def mock_send_email(monkeypatch):
+    """
+    Simula fast_mail.send_message per evitare l'invio di email effettive.
+    """
+    mock_send = AsyncMock()
+    monkeypatch.setattr(fast_mail, "send_message", mock_send)
+    return mock_send
