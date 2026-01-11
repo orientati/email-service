@@ -2,9 +2,8 @@ from pydantic_settings import SettingsConfigDict, BaseSettings
 
 
 class Settings(BaseSettings):
-    SERVICE_NAME: str = "Servizio Template"
+    SERVICE_NAME: str = "Email Service"
     SERVICE_VERSION: str = "0.1.0"
-    DATABASE_URL: str = "sqlite:///./database.db"
     RABBITMQ_HOST: str = "localhost"
     RABBITMQ_PORT: int = 5672
     RABBITMQ_USER: str = "guest"
@@ -32,7 +31,8 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_file=".env",
-        env_prefix="EMAIL_"  # Prefisso di tutte le variabili (es. EMAIL_DATABASE_URL)
+        env_prefix="EMAIL_",
+        extra="ignore"
     )
 
 
