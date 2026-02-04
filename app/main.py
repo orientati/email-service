@@ -27,42 +27,9 @@ sentry_sdk.init(
 sentry_sdk.set_tag("service.name", settings.SERVICE_NAME)
 logger = None
 
-# RabbitMQ Broker
-# async def callback(message): #TODO: spostare in un servizio per rabbitmq
-# async with message.process():
-#     try:
-#         body = message.body.decode()
-#         data = json.loads(body)
-#         if logger:
-#             logger.info(f"Received email task: {data}")
-#
-#         # Si presume che il corpo del messaggio sia un JSON che corrisponde allo schema SendEmail o abbia un campo 'data'
-#
-#         email_data = data.get("data", data)
-#
-#         # Validazione tramite schema
-#         from app.schemas.email import SendEmail
-#         from app.services.email import send_email
-#
-#         email_request = SendEmail(**email_data)
-#         result = await send_email(email_request)
-#
-#         if result.code != 200:
-#             if logger:
-#                 logger.error(f"Failed to send email via RabbitMQ: {result.message} - {result.detail}")
-#         else:
-#             if logger:
-#                 logger.info(f"Email sent via RabbitMQ: {result.detail}")
-#
-#     except Exception as e:
-#         if logger:
-#             logger.error(f"Error processing RabbitMQ message: {e}")
-#
-
 exchanges = {
     "email": email_consumer.on_email_message,
 }
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -72,24 +39,21 @@ async def lifespan(app: FastAPI):
 
     # Avvia il broker asincrono all'avvio dell'app
     broker_instance = broker.AsyncBrokerSingleton()
-    connected = False
-    for i in range(settings.RABBITMQ_CONNECTION_RETRIES):
-        logger.info(f"Connecting to RabbitMQ (attempt {i + 1}/{settings.RABBITMQ_CONNECTION_RETRIES})...")
-        connected = await broker_instance.connect()
-        if connected:
-            break
-        logger.warning(
-            f"Failed to connect to RabbitMQ. Retrying in {settings.RABBITMQ_CONNECTION_RETRY_DELAY} seconds...")
-        await asyncio.sleep(settings.RABBITMQ_CONNECTION_RETRY_DELAY)
-
-    if not connected:
-        logger.error("Could not connect to RabbitMQ after multiple attempts. Exiting...")
-        sys.exit(1)
-
-    else:
+    
+    try:
+        # Connect gestisce internamente i retry loggando warning invece di error
+        await broker_instance.connect(
+            retries=settings.RABBITMQ_CONNECTION_RETRIES,
+            delay=settings.RABBITMQ_CONNECTION_RETRY_DELAY
+        )
         logger.info("Connected to RabbitMQ.")
+        
         for exchange, cb in exchanges.items():
             await broker_instance.subscribe(exchange, cb, routing_key=settings.RABBITMQ_SEND_EMAIL_ROUTING_KEY)
+            
+    except Exception as e:
+        logger.error(f"Could not connect to RabbitMQ after multiple attempts: {e}. Exiting...")
+        sys.exit(1)
 
     yield
 
