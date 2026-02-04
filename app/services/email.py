@@ -7,9 +7,10 @@ from fastapi.templating import Jinja2Templates
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 
 from app.core.config import settings
+from app.core.logging import get_logger
 from app.schemas.email import EmailRequest, SendEmailResponseStatus
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parents[1]  # recupera la directory principale dell'applicazione
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))  # Imposta la directory dei template
