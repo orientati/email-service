@@ -2,7 +2,7 @@ from pydantic_settings import SettingsConfigDict, BaseSettings
 
 
 class Settings(BaseSettings):
-    SERVICE_NAME: str = "Email Service"
+    SERVICE_NAME: str = "email_service"
     SERVICE_VERSION: str = "0.1.0"
     RABBITMQ_HOST: str = "localhost"
     RABBITMQ_PORT: int = 5672
