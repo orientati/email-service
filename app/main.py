@@ -40,20 +40,19 @@ async def lifespan(app: FastAPI):
     # Avvia il broker asincrono all'avvio dell'app
     broker_instance = broker.AsyncBrokerSingleton()
     
-    try:
-        # Connect gestisce internamente i retry loggando warning invece di error
-        await broker_instance.connect(
-            retries=settings.RABBITMQ_CONNECTION_RETRIES,
-            delay=settings.RABBITMQ_CONNECTION_RETRY_DELAY
-        )
-        logger.info("Connected to RabbitMQ.")
-        
-        for exchange, cb in exchanges.items():
-            await broker_instance.subscribe(exchange, cb, routing_key=settings.RABBITMQ_SEND_EMAIL_ROUTING_KEY)
-            
-    except Exception as e:
-        logger.error(f"Could not connect to RabbitMQ after multiple attempts: {e}. Exiting...")
+    # Connect ritorna False se fallisce dopo tutti i retry
+    connected = await broker_instance.connect(
+        retries=settings.RABBITMQ_CONNECTION_RETRIES,
+        delay=settings.RABBITMQ_CONNECTION_RETRY_DELAY
+    )
+    
+    if not connected:
+        logger.error("Could not connect to RabbitMQ after multiple attempts. Exiting...")
         sys.exit(1)
+    
+    logger.info("Connected to RabbitMQ.")
+    for exchange, cb in exchanges.items():
+        await broker_instance.subscribe(exchange, cb, routing_key=settings.RABBITMQ_SEND_EMAIL_ROUTING_KEY)
 
     yield
 
