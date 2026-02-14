@@ -10,8 +10,9 @@ services:
 
   email-service:
     build: .
-
-    command: gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000 --workers 1
+    env_file:
+      - .env
+    command: [ "python3", "-m", "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "1" ]
     networks:
       - rabbit_net
     restart: unless-stopped
